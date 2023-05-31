@@ -199,7 +199,7 @@ func createMessage(c *gin.Context, db *sql.DB) {
 	}
 
 	// Insert message into database
-	result, err := db.Exec("INSERT INTO messages (channel_id, user_id, text) VALUES (?, ?, ?)", message.ChannelID, message.UserID, message.Text)
+	result, err := db.Exec("INSERT INTO messages (channel_id, user_id, message) VALUES (?, ?, ?)", message.ChannelID, message.UserID, message.Text)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -240,7 +240,7 @@ func listMessages(c *gin.Context, db *sql.DB) {
 	}
 
 	// Query database for messages
-	rows, err := db.Query("SELECT id, channel_id, user_id, text FROM messages WHERE channel_id = ? AND id > ? ORDER BY id ASC LIMIT ?", channelID, lastMessageID, limit)
+	rows, err := db.Query("SELECT id, channel_id, user_id, message FROM messages WHERE channel_id = ? AND id > ? ORDER BY id ASC LIMIT ?", channelID, lastMessageID, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
