@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/glebarez/go-sqlite"
 )
 
 type User struct {
@@ -40,7 +40,7 @@ func main() {
 	fmt.Println("Working directory:", wd)
 
 	// Open the SQLite database file
-	db, err := sql.Open("sqlite3", wd+"./database.db")
+	db, err := sql.Open("sqlite", wd+"./database.db")
 
 	if err != nil {
 		log.Fatal(err)
@@ -56,7 +56,6 @@ func main() {
 	// Create the Gin router
 	r := gin.Default()
 
-	err = r.Run(":8080")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -72,6 +71,8 @@ func main() {
 
 	// Login endpoint
 	r.POST("/login", func(c *gin.Context) { login(c, db) })
+
+	err = r.Run(":8080")
 }
 
 // User creation endpoint.
