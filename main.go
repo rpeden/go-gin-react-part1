@@ -42,10 +42,6 @@ func main() {
 	// Open the SQLite database file
 	db, err := sql.Open("sqlite", wd+"./database.db")
 
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {
@@ -73,6 +69,9 @@ func main() {
 	r.POST("/login", func(c *gin.Context) { login(c, db) })
 
 	err = r.Run(":8080")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // User creation endpoint.
