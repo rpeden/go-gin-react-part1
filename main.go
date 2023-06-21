@@ -31,16 +31,12 @@ type Message struct {
 }
 
 func main() {
-	// Get the working directory
-	wd, err := os.Getwd()
+	// Open the SQLite database file
+	db, err := sql.Open("sqlite3", "./database.db")
+
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Print the working directory
-	fmt.Println("Working directory:", wd)
-
-	// Open the SQLite database file
-	db, err := sql.Open("sqlite", wd+"./database.db")
 
 	defer func(db *sql.DB) {
 		err := db.Close()
@@ -52,29 +48,26 @@ func main() {
 	// Create the Gin router
 	r := gin.Default()
 
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Creation endpoints
+	// Create endpoints
 	r.POST("/users", func(c *gin.Context) { createUser(c, db) })
 	r.POST("/channels", func(c *gin.Context) { createChannel(c, db) })
 	r.POST("/messages", func(c *gin.Context) { createMessage(c, db) })
 
-	// Listing endpoints
+	// List endpoints
 	r.GET("/channels", func(c *gin.Context) { listChannels(c, db) })
 	r.GET("/messages", func(c *gin.Context) { listMessages(c, db) })
 
 	// Login endpoint
 	r.POST("/login", func(c *gin.Context) { login(c, db) })
 
-	err = r.Run(":8080")
+    err = r.Run(":8080")
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-// User creation endpoint.
+
+// User creation endpoint
 func createUser(c *gin.Context, db *sql.DB) {
 	// Parse JSON request body into User struct
 	var user User
@@ -101,7 +94,7 @@ func createUser(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, gin.H{"id": id})
 }
 
-// Login endpoint.
+// Login endpoint
 func login(c *gin.Context, db *sql.DB) {
 	// Parse JSON request body into User struct
 	var user User
@@ -130,7 +123,7 @@ func login(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, gin.H{"id": id})
 }
 
-// Channel creation endpoint.
+// Channel creation endpoint
 func createChannel(c *gin.Context, db *sql.DB) {
 	// Parse JSON request body into Channel struct
 	var channel Channel
@@ -157,7 +150,7 @@ func createChannel(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, gin.H{"id": id})
 }
 
-// Channel listing endpoint.
+// Channel listing endpoint
 func listChannels(c *gin.Context, db *sql.DB) {
 	// Query database for channels
 	rows, err := db.Query("SELECT id, name FROM channels")
@@ -189,7 +182,7 @@ func listChannels(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, channels)
 }
 
-// Message creation endpoint.
+// Message creation endpoint
 func createMessage(c *gin.Context, db *sql.DB) {
 	// Parse JSON request body into Message struct
 	var message Message
@@ -216,7 +209,7 @@ func createMessage(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, gin.H{"id": id})
 }
 
-// Message listing endpoint.
+// Message listing endpoint
 func listMessages(c *gin.Context, db *sql.DB) {
 	// Parse channel ID from URL
 	channelID, err := strconv.Atoi(c.Param("channelID"))
@@ -268,3 +261,4 @@ func listMessages(c *gin.Context, db *sql.DB) {
 	// Return slice of messages
 	c.JSON(http.StatusOK, messages)
 }
+
