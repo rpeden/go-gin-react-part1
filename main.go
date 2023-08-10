@@ -27,16 +27,21 @@ type Message struct {
 	ID        int    `json:"id"`
 	ChannelID int    `json:"channel_id"`
 	UserID    int    `json:"user_id"`
+	UserName  string `json:"user_name"`
 	Text      string `json:"text"`
 }
 
 func main() {
-	// Open the SQLite database file
-	db, err := sql.Open("sqlite3", "./database.db")
-
+	// Get the working directory
+	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
+	// Print the working directory
+	fmt.Println("Working directory:", wd)
+
+	// Open the SQLite database file
+	db, err := sql.Open("sqlite", wd+"/database.db")
 
 	defer func(db *sql.DB) {
 		err := db.Close()
@@ -48,12 +53,16 @@ func main() {
 	// Create the Gin router
 	r := gin.Default()
 
-	// Create endpoints
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Creation endpoints
 	r.POST("/users", func(c *gin.Context) { createUser(c, db) })
 	r.POST("/channels", func(c *gin.Context) { createChannel(c, db) })
 	r.POST("/messages", func(c *gin.Context) { createMessage(c, db) })
 
-	// List endpoints
+	// Listing endpoints
 	r.GET("/channels", func(c *gin.Context) { listChannels(c, db) })
 	r.GET("/messages", func(c *gin.Context) { listMessages(c, db) })
 
@@ -65,7 +74,6 @@ func main() {
 		log.Fatal(err)
 	}
 }
-
 
 // User creation endpoint
 func createUser(c *gin.Context, db *sql.DB) {
@@ -212,7 +220,7 @@ func createMessage(c *gin.Context, db *sql.DB) {
 // Message listing endpoint
 func listMessages(c *gin.Context, db *sql.DB) {
 	// Parse channel ID from URL
-	channelID, err := strconv.Atoi(c.Param("channelID"))
+	channelID, err := strconv.Atoi(c.Query("channelID"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -233,7 +241,7 @@ func listMessages(c *gin.Context, db *sql.DB) {
 	}
 
 	// Query database for messages
-	rows, err := db.Query("SELECT id, channel_id, user_id, message FROM messages WHERE channel_id = ? AND id > ? ORDER BY id ASC LIMIT ?", channelID, lastMessageID, limit)
+	rows, err := db.Query("SELECT m.id, channel_id, user_id, u.username AS user_name, message FROM messages m LEFT JOIN users u ON u.id = m.user_id WHERE channel_id = ? AND m.id > ? ORDER BY m.id ASC LIMIT ?", channelID, lastMessageID, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -248,7 +256,7 @@ func listMessages(c *gin.Context, db *sql.DB) {
 		var message Message
 
 		// Scan row into message
-		err := rows.Scan(&message.ID, &message.ChannelID, &message.UserID, &message.Text)
+		err := rows.Scan(&message.ID, &message.ChannelID, &message.UserID, &message.UserName, &message.Text)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -261,4 +269,3 @@ func listMessages(c *gin.Context, db *sql.DB) {
 	// Return slice of messages
 	c.JSON(http.StatusOK, messages)
 }
-
